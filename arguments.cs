@@ -11,74 +11,81 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 
 namespace WMIParserStr
 {
     public class Arguments
     {
         // Variables
-        public StringDictionary Parameters = new StringDictionary();
+        public Dictionary<string, string> Parameters = new Dictionary<string, string>();
 
         // Constructor
-        public Arguments(string[] Args)
+        public Arguments(string[] args)
         {
-            Regex Spliter = new Regex(@"^-{1,2}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            Regex Remover = new Regex(@"^[""]?(.*?)[""]?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-            string Parameter = null;
-            string[] Parts;
-            foreach (string Txt in Args)
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
+
+            Regex splitter = new Regex(@"^-{1,2}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            Regex remover = new Regex(@"^[""]?(.*?)[""]?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+            string parameter = null;
+            string[] parts;
+
+            foreach (string arg in args)
             {
-                string newTxt = "";
-                if (Txt == "\\") { newTxt = Txt + "\\"; } else { newTxt = Txt; }
-                Parts = Spliter.Split(newTxt, 3);
-                switch (Parts.Length)
+                string newArg = arg == "\\" ? arg + "\\" : arg;
+                parts = splitter.Split(newArg, 3);
+
+                switch (parts.Length)
                 {
                     case 1:
-                        if (Parameter != null)
+                        if (!string.IsNullOrEmpty(parameter))
                         {
-                            if (!Parameters.ContainsKey(Parameter))
+                            if (!Parameters.ContainsKey(parameter))
                             {
-                                Parts[0] = Remover.Replace(Parts[0], "$1");
-                                Parameters.Add(Parameter, Parts[0]);
+                                string value = remover.Replace(parts[0], "$1");
+                                Parameters.Add(parameter, value);
                             }
-                            Parameter = null;
+                            parameter = null;
                         }
                         break;
                     case 2:
-                        if (Parameter != null)
+                        if (!string.IsNullOrEmpty(parameter) && !Parameters.ContainsKey(parameter))
                         {
-                            if (!Parameters.ContainsKey(Parameter)) Parameters.Add(Parameter, "");
+                            Parameters.Add(parameter, string.Empty);
                         }
-                        Parameter = Parts[1];
+                        parameter = parts[1];
                         break;
                     case 3:
-                        if (Parameter != null)
+                        if (!string.IsNullOrEmpty(parameter) && !Parameters.ContainsKey(parameter))
                         {
-                            if (!Parameters.ContainsKey(Parameter)) Parameters.Add(Parameter, "true");
+                            Parameters.Add(parameter, "true");
                         }
-                        Parameter = Parts[1];
-                        if (!Parameters.ContainsKey(Parameter))
+                        parameter = parts[1];
+                        if (!Parameters.ContainsKey(parameter))
                         {
-                            Parts[2] = Remover.Replace(Parts[2], "$1");
-                            Parameters.Add(Parameter, Parts[2]);
+                            string value = remover.Replace(parts[2], "$1");
+                            Parameters.Add(parameter, value);
                         }
-                        Parameter = null;
+                        parameter = null;
                         break;
                 }
             }
-            if (Parameter != null)
+
+            if (!string.IsNullOrEmpty(parameter) && !Parameters.ContainsKey(parameter))
             {
-                if (!Parameters.ContainsKey(Parameter)) Parameters.Add(Parameter, "");
+                Parameters.Add(parameter, string.Empty);
             }
         }
-        public string this[string Param]
+
+        public string this[string param]
         {
             get
             {
-                return (Parameters[Param]);
+                return Parameters.ContainsKey(param) ? Parameters[param] : null;
             }
         }
     }

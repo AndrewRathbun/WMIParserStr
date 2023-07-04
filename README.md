@@ -20,7 +20,7 @@ Below is a current list of parameters, whether they're mandatory or optional, an
 
 ## Example Commands
 
-`WMIParserStr.exe -i C:\temp\test\OBJECTS.DATA -o C:\temp\test\TSV -s C:\temp\test\Strings`
+`WMIParserStr.exe -input C:\temp\test\OBJECTS.DATA -output C:\temp\test\TSV -strings C:\temp\test\Strings`
 
 ## Console output:
 

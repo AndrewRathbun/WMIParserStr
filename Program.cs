@@ -1,29 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace WMIParserStr
 {
     class Program
     {
         public static Arguments CommandLine;
-        public static string entrada;
+        public static string entry;
         public static List<Details> LConsumers = new List<Details>();
         public static List<Details> LEventFilters = new List<Details>();
         public static List<Details> LBindings = new List<Details>();
 
         static void Main(string[] args)
         {
-            //----------------------------------------------------------
             CommandLine = new Arguments(args);
-            if ((!string.IsNullOrEmpty(CommandLine["i"])) && (File.Exists(CommandLine["i"]))) entrada = CommandLine["i"];
-            else Ayuda();
+            if ((!string.IsNullOrEmpty(CommandLine["input"])) && (File.Exists(CommandLine["input"])))
+                entry = CommandLine["input"];
+            else
+                DisplayHelp();
 
-            string data = File.ReadAllText(entrada);
+            string data = File.ReadAllText(entry);
 
             Regex getNames = new Regex(@"(.*).Name=""(.*)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
             Regex strings = new Regex(@"[ -~]{3,}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -31,6 +29,25 @@ namespace WMIParserStr
 
             int longObjects = matchesStrings.Count;
 
+            ProcessBindings(getNames, matchesStrings, longObjects);
+            ProcessConsumers(getNames, matchesStrings, longObjects);
+            ProcessEventFilters(getNames, matchesStrings, longObjects);
+
+            OutputToConsole();
+
+            if ((!string.IsNullOrEmpty(CommandLine["strings"])) && (Directory.Exists(CommandLine["strings"])))
+            {
+                WriteStrings(matchesStrings);
+            }
+
+            if ((!string.IsNullOrEmpty(CommandLine["output"])) && (Directory.Exists(CommandLine["output"])))
+            {
+                OutputToFile();
+            }
+        }
+
+        private static void ProcessBindings(Regex getNames, MatchCollection matchesStrings, int longObjects)
+        {
             for (int i = 0; i < longObjects; i++)
             {
                 Match m = matchesStrings[i];
@@ -43,6 +60,10 @@ namespace WMIParserStr
                     LBindings.Add(new Details("Binding", nameConsumer[0].Groups[1].Value, nameConsumer[0].Groups[2].Value, nameEventFilter[0].Groups[2].Value, false));
                 }
             }
+        }
+
+        private static void ProcessConsumers(Regex getNames, MatchCollection matchesStrings, int longObjects)
+        {
             for (int i = 0; i < longObjects; i++)
             {
                 Match m = matchesStrings[i];
@@ -73,10 +94,11 @@ namespace WMIParserStr
                     }
                     if (valid)
                     {
-                        //check if it is a consumer without binding
-                        var match = LBindings.FirstOrDefault(item => item.Content.Equals(name));
-                        if (match != null) LConsumers.Add(new Details(type, name, content, other, false));
-                        else LConsumers.Add(new Details(type, name, content, other, true));
+                        var match = LBindings.Find(item => item.Content.Equals(name));
+                        if (match != null)
+                            LConsumers.Add(new Details(type, name, content, other, false));
+                        else
+                            LConsumers.Add(new Details(type, name, content, other, true));
                     }
                     else
                     {
@@ -90,7 +112,7 @@ namespace WMIParserStr
                     content = matchesStrings[i].Value;
                     i++;
                     string temp = matchesStrings[i].Value;
-                    var match = LBindings.FirstOrDefault(item => item.Content.Equals(temp));
+                    var match = LBindings.Find(item => item.Content.Equals(temp));
                     if (match != null)
                     {
                         name = temp;
@@ -101,9 +123,11 @@ namespace WMIParserStr
                         other = temp;
                         i++;
                         name = matchesStrings[i].Value;
-                        match = LBindings.FirstOrDefault(item => item.Content.Equals(name));
-                        if (match != null) LConsumers.Add(new Details(type, name, content, "", false));
-                        else LConsumers.Add(new Details(type, name, content, "", true));
+                        match = LBindings.Find(item => item.Content.Equals(name));
+                        if (match != null)
+                            LConsumers.Add(new Details(type, name, content, "", false));
+                        else
+                            LConsumers.Add(new Details(type, name, content, "", true));
                     }
                     else
                     {
@@ -111,7 +135,19 @@ namespace WMIParserStr
                         LConsumers.Add(new Details(type, name, content, "", true));
                     }
                 }
-                else if (m.Value == "__EventFilter")
+            }
+        }
+
+        private static void ProcessEventFilters(Regex getNames, MatchCollection matchesStrings, int longObjects)
+        {
+            for (int i = 0; i < longObjects; i++)
+            {
+                Match m = matchesStrings[i];
+                string type = "";
+                string name = "";
+                string content = "";
+                string other = "";
+                if (m.Value == "__EventFilter")
                 {
                     type = "__EventFilter";
                     i++;
@@ -124,11 +160,13 @@ namespace WMIParserStr
                     {
                         i++;
                         string temp = matchesStrings[i].Value;
-                        if ((temp.ToLower() == "wql") || (n==6))
+                        if ((temp.ToLower() == "wql") || (n == 6))
                         {
-                            var match = LBindings.FirstOrDefault(item => item.Other.Equals(name));
-                            if (match != null) LEventFilters.Add(new Details(type, name, content, other, false));
-                            else LEventFilters.Add(new Details(type, name, content, other, true));
+                            var match = LBindings.Find(item => item.Other.Equals(name));
+                            if (match != null)
+                                LEventFilters.Add(new Details(type, name, content, other, false));
+                            else
+                                LEventFilters.Add(new Details(type, name, content, other, true));
                             break;
                         }
                         else
@@ -138,31 +176,8 @@ namespace WMIParserStr
                     }
                 }
             }
-
-            OutputToConsole();
-
-            if ((!string.IsNullOrEmpty(CommandLine["s"])) && (Directory.Exists(CommandLine["s"])))
-            {
-                WriteStrings(matchesStrings);
-            }
-
-            if ((!string.IsNullOrEmpty(CommandLine["o"])) && (Directory.Exists(CommandLine["o"])))
-            {
-                OutputToFile();
-            }
         }
 
-        private static void WriteStrings(MatchCollection matchesStrings)
-        {
-            using (FileStream fileStream = new FileStream(Path.Combine(CommandLine["s"], "WMIParserStr-OBJECTS_strings.txt"), FileMode.Create, FileAccess.Write))
-            using (StreamWriter writer = new StreamWriter(fileStream))
-            {
-                foreach (var line in matchesStrings)
-                {
-                    writer.WriteLine(line.ToString());
-                }
-            }
-        }
         private static void OutputToConsole()
         {
             Console.WriteLine("Total Bindings: {0}", LBindings.Count);
@@ -182,9 +197,25 @@ namespace WMIParserStr
             }
         }
 
+        private static void WriteStrings(MatchCollection matchesStrings)
+        {
+            string outputPath = Path.Combine(CommandLine["strings"], "WMIParserStr-OBJECTS_strings.txt");
+
+            using (FileStream fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+            using (StreamWriter writer = new StreamWriter(fileStream))
+            {
+                foreach (var line in matchesStrings)
+                {
+                    writer.WriteLine(line.ToString());
+                }
+            }
+        }
+
         private static void OutputToFile()
         {
-            using (FileStream fileStream = new FileStream(Path.Combine(CommandLine["o"], "WMIParserStr-output.tsv"), FileMode.Create, FileAccess.Write))
+            string outputPath = Path.Combine(CommandLine["output"], "WMIParserStr-output.tsv");
+
+            using (FileStream fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
             using (StreamWriter writer = new StreamWriter(fileStream))
             {
                 writer.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", "Type", "Name", "Content", "Other", "Orphan");
@@ -203,20 +234,18 @@ namespace WMIParserStr
             }
         }
 
-        private static void Ayuda()
+        private static void DisplayHelp()
         {
-            var ayuda = $"Author: Ignacio J. Pérez Jiménez\r\ngithub.com/ignacioj\r\n\r\n-i Input file (OBJECTS.DATA)\r\n-o Output directory for analysis results\r\n-s Ouput directory to save the strings (not Unicode) of OBJECTS.DATA";
-            Console.WriteLine(ayuda);
-            System.Environment.Exit(0);
+            var help = "Author: Ignacio J. Pérez Jiménez\r\n" +
+                       "github.com/ignacioj\r\n\r\n" +
+                       "-input: Input file (OBJECTS.DATA)\r\n" +
+                       "-output: Output directory for analysis results\r\n" +
+                       "-strings: Output directory to save the strings (not Unicode) of OBJECTS.DATA";
+            Console.WriteLine(help);
+            Environment.Exit(0);
         }
     }
 
-    /*
-                    Type               Name                 Content                 Other                               Orphan
-     Bindings:      Binding            Type of Consumer     Consumer name           EventFilter name                    FALSE
-     Consumers:     Type of consumer   Consumer name        CommandLineTemplate     [ExecutablePath][VBScript/JSCript]  False/True 
-     EventFilter:   __EventFilter      EventFilter name     Condition               [root\cimv2][...]
-     */
     public class Details
     {
         public string Type { get; set; }

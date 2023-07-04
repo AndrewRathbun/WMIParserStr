@@ -12,11 +12,11 @@ There will be false positives due to the search method.
 
 Below is a current list of parameters, whether they're mandatory or optional, and a description of each switch.
  
-`-i` - Mandatory - Input file (OBJECTS.DATA)
+`-input` - Mandatory - Input file (OBJECTS.DATA)
 
-`-o` - Optional - Output directory for analysis results. Tab delimited file
+`-output` - Optional - Output directory for analysis results. Tab delimited file
 
-`-s` - Optional - Output directory to save the strings (not Unicode) of OBJECTS.DATA
+`-strings` - Optional - Output directory to save the strings (not Unicode) of OBJECTS.DATA
 
 ## Example Commands
 

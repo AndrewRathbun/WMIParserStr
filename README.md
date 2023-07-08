@@ -1,6 +1,6 @@
 # WMIParserStr
 
-This repo is an updated fork of the original project, found [here](https://github.com/ignacioj/WMIParserStr). All credit due to the original author of this tool. The only thing this fork has done over the original repo (so far) is an updated README, providing a compiled, signed binary, and providing the binary in the Releases section for ease of access.
+This repo is an updated fork of the original project, found [here](https://github.com/ignacioj/WMIParserStr). All credit is due to the original author of this tool. The only thing this fork has done over the original repo (so far) is an updated README, providing a compiled, signed binary and providing the binary in the Releases section for ease of access.
 
 ## WMI OBJECTS.DATA parser
 
@@ -10,11 +10,11 @@ There will be false positives due to the search method.
 
 ## Parameters
 
-Below is a current list of parameters, whether they're mandatory or optional, and a description of each switch.
+Below is a current list of mandatory or optional parameters and a description of each switch.
  
 `-input` - Mandatory - Input file (OBJECTS.DATA)
 
-`-output` - Optional - Output directory for analysis results. Tab delimited file
+`-output` - Optional - Output directory for analysis results. Tab-delimited file
 
 `-strings` - Optional - Output directory to save the strings (not Unicode) of OBJECTS.DATA
 
@@ -24,7 +24,7 @@ Below is a current list of parameters, whether they're mandatory or optional, an
 
 ## Console output:
 
-When running this tool with or without any of the optional switches, the tool will print output similar to the example below to the console.
+When running this tool with or without any optional switches, the tool will print output similar to the example below to the console.
 
 ```
 Total Bindings: 22
@@ -70,7 +70,7 @@ Total EventFilters: 22
 
 ## Tab delimited file:
 
-When using the `-o` switch, a TSV file will be created that will look similar to below:
+When using the `-output` switch, a TSV file will be created that will look similar to the below:
 
 ```
 Headers:              Type||       Name     ||       Content     ||              Other               ||Orphan
